@@ -10,7 +10,7 @@ import MapKit
 
 struct ContentView: View {
     @StateObject var locationManager = LocationManager()
-    @State private var userTracakingMode: MapUserTrackingMode = .follow
+    @State private var userTrackingMode: MapUserTrackingMode = .follow
     @State private var region = MKCoordinateRegion(
         center: CLLocationCoordinate2D(
             latitude: 42.15704,
@@ -25,11 +25,28 @@ struct ContentView: View {
         Map(coordinateRegion: $region,
             interactionModes: .all,
             showsUserLocation: true,
-            userTrackingMode: $userTracakingMode,
+            userTrackingMode: $userTrackingMode,
             annotationItems: places) { place in
             MapAnnotation(coordinate: place.coordinate,
                           anchorPoint: CGPoint(x: 0.5, y: 1.2)) {
                 Marker(name: place.name)
+            }
+        }
+        .onAppear(perform: {
+            findLocation(name: "Springfield")
+        })
+    }
+    
+    func findLocation(name: String) {
+        locationManager.geocoder.geocodeAddressString(name) { (placemarks, error) in
+            guard placemarks != nil else {
+                print("Could not locate \(name)")
+                return
+            }
+            for placemark in placemarks! {
+                let place = Place(name: "\(placemark.name!), \(placemark.administrativeArea!)",
+                                  coordinate: placemark.location!.coordinate)
+                places.append(place)
             }
         }
     }
